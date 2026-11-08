@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="en">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Where hurling, camogie, Gaelic football and ladies football are strongest across Ireland's 32 counties, per head of population.">
+<meta charset="utf-8">
+<title>Gaelic Games Heartlands</title>
+<style>
+/* Layout: Swiss grid. Heavy black rule, flush-left title against an offset intro;
+   12 columns below: map on 7, controls and county data on 5. Rules, not boxes. */
+:root {
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --fg: #111111;
+  --muted: #6b6b6b;
+  --line: #d4d4d4;
+  --rule: #111111;
+  --county-edge: #ffffff;
+  --ramp-lo: #efefef;
+  --hurl-hi: #d52b1e;
+  --foot-hi: #1f4fd1;
+  --gap-hi: #111111;
+  --accent: #d52b1e;
+  --nodata: #ffffff;
+  --focus: #1f4fd1;
+  --sans: "Helvetica Neue", Helvetica, Arial, "Nimbus Sans", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e0e0e; --surface: #0e0e0e; --fg: #f2f2f2; --muted: #9a9a9a; --line: #333333; --rule: #f2f2f2;
+    --county-edge: #0e0e0e; --ramp-lo: #262626; --hurl-hi: #ff5a4a; --foot-hi: #7a9bff; --gap-hi: #f2f2f2;
+    --accent: #ff5a4a; --nodata: #0e0e0e; --focus: #7a9bff; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e0e0e; --surface: #0e0e0e; --fg: #f2f2f2; --muted: #9a9a9a; --line: #333333; --rule: #f2f2f2;
+  --county-edge: #0e0e0e; --ramp-lo: #262626; --hurl-hi: #ff5a4a; --foot-hi: #7a9bff; --gap-hi: #f2f2f2;
+  --accent: #ff5a4a; --nodata: #0e0e0e; --focus: #7a9bff; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--sans); font-size: 15px; line-height: 1.4;
+  -webkit-font-smoothing: antialiased;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 24px 40px;
+}
+.wrap { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: 24px; row-gap: 20px; }
+
+header { grid-column: 1 / -1; display: grid; grid-template-columns: subgrid; border-top: 8px solid var(--rule); padding-top: 14px; row-gap: 12px; }
+header h1 { grid-column: 1 / span 7; margin: 0; font-weight: 700; font-size: clamp(40px, 7vw, 84px); line-height: .92; letter-spacing: -0.035em; text-wrap: balance; }
+header p { grid-column: 9 / -1; align-self: end; margin: 0; font-size: 15px; color: var(--fg); max-width: 40ch; }
+@media (max-width: 820px) { header h1, header p { grid-column: 1 / -1; } }
+
+.notice { grid-column: 1 / -1; display: flex; gap: 10px; align-items: baseline; font-size: 13px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 8px; }
+.notice::before { content: ""; flex: none; width: 10px; height: 10px; background: var(--accent); transform: translateY(1px); }
+.notice strong { color: var(--fg); font-weight: 700; }
+
+.main { grid-column: 1 / -1; display: grid; grid-template-columns: subgrid; row-gap: 28px; align-items: start; }
+.mapbox { grid-column: 1 / span 7; position: relative; min-width: 0; }
+.panel { grid-column: 8 / -1; display: flex; flex-direction: column; gap: 28px; min-width: 0; }
+@media (max-width: 820px) { .mapbox, .panel { grid-column: 1 / -1; } }
+
+#map { width: 100%; height: auto; display: block; }
+#map path.county { stroke: var(--county-edge); stroke-width: .7; cursor: pointer; transition: fill .3s linear; }
+#map path.county:hover { stroke: var(--fg); stroke-width: 1.2; }
+#map path.county.sel { stroke: var(--fg); stroke-width: 2.2; }
+#map path.county:focus-visible { outline: none; stroke: var(--focus); stroke-width: 2.6; }
+@media (prefers-reduced-motion: reduce) { #map path.county { transition: none; } }
+.layer-title { position: absolute; left: 0; top: 0; pointer-events: none; }
+.layer-title .name { font-weight: 700; font-size: clamp(20px, 2.6vw, 28px); line-height: 1.05; letter-spacing: -0.01em; }
+.layer-title .year { font-weight: 700; font-size: clamp(56px, 9vw, 104px); line-height: .85; letter-spacing: -0.05em; color: var(--accent); font-variant-numeric: tabular-nums; }
+
+.legend { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; border-top: 1px solid var(--rule); padding-top: 8px; }
+.legend .label { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--fg); }
+.legend .bins { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 0; max-width: 440px; }
+.legend .bins span { height: 14px; }
+.legend .ticks { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; max-width: 440px; font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+.controls { display: flex; flex-direction: column; gap: 16px; border-top: 2px solid var(--rule); padding-top: 12px; }
+.ctl { display: flex; flex-direction: column; gap: 6px; }
+.ctl > .label { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--fg); }
+.seg { display: flex; flex-wrap: wrap; border: 1px solid var(--fg); }
+.seg button { flex: 1 1 auto; font: 500 14px/1 var(--sans); color: var(--fg); background: transparent; border: 0; border-right: 1px solid var(--fg); border-radius: 0; padding: 10px 12px; cursor: pointer; text-align: left; }
+.seg button:last-child { border-right: 0; }
+.seg button:hover { background: var(--ramp-lo); }
+.seg button[aria-pressed="true"] { background: var(--fg); color: var(--bg); font-weight: 700; }
+.seg button:focus-visible, .play:focus-visible, input[type=range]:focus-visible, .rank button:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+.timeline { display: flex; align-items: center; gap: 12px; }
+.play { flex: none; width: 40px; height: 40px; border-radius: 0; border: 1px solid var(--fg); background: var(--fg); color: var(--bg); cursor: pointer; display: grid; place-items: center; }
+.play svg { width: 14px; height: 14px; fill: currentColor; }
+.slider { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+input[type=range] { width: 100%; accent-color: var(--accent); }
+.slider .ends { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+.card { border-top: 2px solid var(--rule); padding-top: 12px; display: flex; flex-direction: column; gap: 12px; }
+.card h2 { margin: 0; font-weight: 700; font-size: 32px; line-height: 1; letter-spacing: -0.025em; }
+.card h2 small { display: block; margin-top: 4px; font-weight: 400; font-size: 14px; letter-spacing: 0; color: var(--muted); }
+.stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; border-top: 1px solid var(--line); }
+.stat { padding: 8px 10px 0 0; }
+.stat + .stat { padding-left: 10px; border-left: 1px solid var(--line); }
+.stat .v { font-weight: 700; font-size: 30px; line-height: 1; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+.stat .k { margin-top: 4px; font-size: 12px; color: var(--muted); line-height: 1.25; }
+.spark { width: 100%; height: auto; display: block; }
+.spark text { fill: var(--muted); font: 11px var(--sans); }
+.spark .key { font-size: 12px; font-weight: 700; }
+.hint { color: var(--muted); font-size: 13px; margin: 0; }
+
+.rank { display: flex; flex-direction: column; max-height: 380px; overflow-y: auto; padding-right: 4px; }
+.rank button { display: grid; grid-template-columns: 24px 96px minmax(0, 1fr) 48px; align-items: center; gap: 10px; width: 100%; background: transparent; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; padding: 6px 0; color: var(--fg); font: 14px var(--sans); text-align: left; cursor: pointer; }
+.rank button:hover { background: var(--ramp-lo); }
+.rank button.sel { font-weight: 700; }
+.rank .n { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.rank .bar { height: 12px; }
+.rank .val { text-align: right; font-variant-numeric: tabular-nums; font-size: 13px; }
+
+.codes { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+.codes th, .codes td { text-align: right; padding: 6px 6px; border-bottom: 1px solid var(--line); }
+.codes th:first-child, .codes td:first-child { text-align: left; padding-left: 0; }
+.codes th { font-weight: 700; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; border-bottom: 1px solid var(--rule); }
+.codes tr.cur td { font-weight: 700; }
+.nodata-list { color: var(--muted); font-size: 12px; margin: 10px 0 0; }
+
+footer { grid-column: 1 / -1; display: grid; grid-template-columns: subgrid; row-gap: 12px; border-top: 2px solid var(--rule); padding-top: 12px; color: var(--muted); font-size: 12px; }
+footer p { margin: 0; grid-column: span 3; }
+footer a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+@media (max-width: 820px) { footer p { grid-column: 1 / -1; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Gaelic Games Heartlands</h1>
+    <p>Where hurling, camogie, Gaelic football and ladies football are strongest, measured against the population of the same sex in each county.</p>
+  </header>
+  <div class="notice" role="note" id="notice"></div>
+
+  <div class="main">
+    <div class="mapbox">
+      <div class="layer-title" aria-live="polite"><div class="name" id="layerName">Hurling</div><div class="year" id="yearBig">2025</div></div>
+      <svg id="map" viewBox="0 0 600 720" role="img" aria-label="Map of Ireland's 32 counties shaded by participation"></svg>
+      <div class="legend" id="legend"></div>
+    </div>
+
+    <div class="panel">
+      <div class="controls">
+        <div class="ctl">
+          <span class="label" id="lblCode">Code</span>
+          <div class="seg" role="group" aria-labelledby="lblCode">
+            <button id="codeHurling" data-code="hurling" aria-pressed="true">Hurling &amp; Camogie</button>
+            <button id="codeFootball" data-code="football" aria-pressed="false">Football</button>
+          </div>
+        </div>
+        <div class="ctl">
+          <span class="label" id="lblGender">Players</span>
+          <div class="seg" role="group" aria-labelledby="lblGender">
+            <button id="gM" data-gender="m" aria-pressed="true">Men</button>
+            <button id="gF" data-gender="f" aria-pressed="false">Women</button>
+            <button id="gGap" data-gender="gap" aria-pressed="false">Women vs Men</button>
+          </div>
+        </div>
+        <div class="ctl" id="timelineCtl">
+          <label class="label" for="year">Season</label>
+          <div class="timeline">
+            <button class="play" id="play" aria-label="Play timeline"><svg viewBox="0 0 16 16" id="playIcon"><path d="M3 1.5v13l11-6.5z"/></svg></button>
+            <div class="slider">
+              <input type="range" id="year" min="2005" max="2025" step="1" value="2025">
+              <div class="ends"><span id="yMin">2005</span><span id="yMax">2025</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" id="detail"><p class="hint">Select a county on the map or in the list to see its trend.</p></div>
+
+      <div class="card">
+        <div class="ctl"><span class="label" id="rankLabel">All counties</span></div>
+        <div class="rank" id="rank"></div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p>Population: CSO census 2002–2022 (Republic, by county and sex), interpolated between census years. Northern Ireland uses 2011 census figures by historic county, scaled to NISRA totals for 2001, 2011 and 2021, with a 51% female share assumed.</p>
+    <p>Boundaries: <a href="https://data-osi.opendata.arcgis.com/datasets/osi::counties-national-statutory-boundaries-2019-generalised-20m">Counties, National Statutory Boundaries 2019</a> © Tailte Éireann, <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a> (Republic); historic counties © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>, ODbL (Northern Ireland). Simplified for the web. GAA counties follow the traditional 32-county map.</p>
+    <p>Player numbers are illustrative placeholders, not real registrations.</p>
+  </footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<script>
+(async function () {
+  const IRISH = { Antrim:"Aontroim", Armagh:"Ard Mhacha", Carlow:"Ceatharlach", Cavan:"An Cabhán", Clare:"An Clár", Cork:"Corcaigh", Derry:"Doire", Donegal:"Dún na nGall", Down:"An Dún", Dublin:"Áth Cliath", Fermanagh:"Fear Manach", Galway:"Gaillimh", Kerry:"Ciarraí", Kildare:"Cill Dara", Kilkenny:"Cill Chainnigh", Laois:"Laois", Leitrim:"Liatroim", Limerick:"Luimneach", Longford:"An Longfort", Louth:"Lú", Mayo:"Maigh Eo", Meath:"An Mhí", Monaghan:"Muineachán", Offaly:"Uíbh Fhailí", Roscommon:"Ros Comáin", Sligo:"Sligeach", Tipperary:"Tiobraid Árann", Tyrone:"Tír Eoghain", Waterford:"Port Láirge", Westmeath:"An Iarmhí", Wexford:"Loch Garman", Wicklow:"Cill Mhantáin" };
+  const LAYER = { hurling: { m: "hurling", f: "camogie" }, football: { m: "football", f: "ladies" } };
+  const NAMES = { hurling: "Hurling", camogie: "Camogie", football: "Gaelic football", ladies: "Ladies football" };
+  const MALE = new Set(["hurling", "football"]);
+  const BINS = {
+    rate: [5, 10, 15, 20, 25, 30, 40],
+    gap: [0.2, 0.35, 0.5, 0.65, 0.8, 1.0],
+  };
+
+  const [geo, data] = await Promise.all([
+    fetch("data/counties.geojson").then(r => r.json()),
+    fetch("data/participation.json").then(r => r.json()),
+  ]);
+  // d3 expects clockwise outer rings; flip any feature that comes out inside-out.
+  geo.features.forEach(f => {
+    if (d3.geoArea(f) > 2 * Math.PI) {
+      const flip = poly => poly.map(r => r.slice().reverse());
+      f.geometry.coordinates = f.geometry.type === "Polygon" ? flip(f.geometry.coordinates) : f.geometry.coordinates.map(flip);
+    }
+  });
+
+  const lastYear = data.years[data.years.length - 1];
+  const state = { code: "hurling", gender: "m", year: lastYear, sel: "Kilkenny", playing: null };
+  const yearInput = document.getElementById("year");
+  yearInput.min = data.years[0]; yearInput.max = lastYear; yearInput.value = state.year;
+  document.getElementById("yMin").textContent = data.years[0];
+  document.getElementById("yMax").textContent = lastYear;
+
+  // ---- values ----
+  function sexOf(key) { return MALE.has(key) ? "m" : "f"; }
+  // Players per 1,000 people of the same sex.
+  function rate(name, key, year = state.year) {
+    const c = data.counties[name];
+    return c.players[key][year] / c.population[year][sexOf(key)] * 1000;
+  }
+  function value(name, year = state.year) {
+    const l = LAYER[state.code];
+    if (state.gender === "gap") {
+      return rate(name, l.f, year) / rate(name, l.m, year);
+    }
+    return rate(name, l[state.gender], year);
+  }
+  const sexWord = g => g === "m" ? "males" : "females";
+  const fmt = v => state.gender === "gap" ? Math.round(v * 100) + "%" : v.toFixed(1);
+
+  function css(v) { return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
+  let colors;
+  function bins() { return state.gender === "gap" ? BINS.gap : BINS.rate; }
+  function buildColors() {
+    const lo = css("--ramp-lo");
+    const hi = state.gender === "gap" ? css("--gap-hi") : css(state.code === "hurling" ? "--hurl-hi" : "--foot-hi");
+    const b = bins();
+    const ramp = d3.range(b.length + 1).map(i => d3.interpolateLab(lo, hi)(0.08 + 0.92 * i / b.length));
+    colors = d3.scaleThreshold().domain(b).range(ramp);
+  }
+  const fill = v => colors(v);
+
+  // ---- map ----
+  const svg = d3.select("#map");
+  const proj = d3.geoTransverseMercator().rotate([8, 0]).fitExtent([[10, 110], [590, 710]], geo);
+  const path = d3.geoPath(proj);
+  const paths = svg.append("g").selectAll("path").data(geo.features).join("path")
+    .attr("class", "county").attr("d", path).attr("tabindex", 0)
+    .attr("aria-label", d => d.properties.name)
+    .on("click", (e, d) => select(d.properties.name))
+    .on("keydown", (e, d) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); select(d.properties.name); } });
+  paths.append("title");
+
+  function select(name) { state.sel = name; render(); }
+
+  function renderLegend() {
+    const b = bins();
+    const lbl = state.gender === "gap"
+      ? "Women's rate as a share of men's"
+      : "Players per 1,000 " + sexWord(state.gender);
+    const ticks = ["", ...b.map(x => state.gender === "gap" ? Math.round(x * 100) + "%" : x)];
+    document.getElementById("legend").innerHTML =
+      `<span class="label">${lbl}</span>
+       <div class="bins">${colors.range().map(c => `<span style="background:${c}"></span>`).join("")}</div>
+       <div class="ticks">${ticks.map(t => `<span>${t}</span>`).join("")}</div>`;
+  }
+
+  function layerName() {
+    const l = LAYER[state.code];
+    if (state.gender === "gap") return `${NAMES[l.f]} vs ${NAMES[l.m].toLowerCase()}`;
+    return NAMES[l[state.gender]];
+  }
+
+  function renderRank() {
+    const names = Object.keys(data.counties).sort((a, b) => value(b) - value(a));
+    const max = d3.max(names, n => value(n)) || 1;
+    document.getElementById("rankLabel").textContent = `All counties, ${state.year}`;
+    document.getElementById("rank").innerHTML = names.map((n, i) => {
+      const v = value(n);
+      return `<button data-name="${n}" class="${n === state.sel ? "sel" : ""}"><span class="n">${i + 1}</span><span>${n}</span><span class="bar" style="width:${(v / max * 100).toFixed(1)}%;background:${colors(v)}"></span><span class="val">${fmt(v)}</span></button>`;
+    }).join("");
+  }
+  document.getElementById("rank").addEventListener("click", e => {
+    const b = e.target.closest("button[data-name]"); if (b) select(b.dataset.name);
+  });
+
+  function renderDetail() {
+    const el = document.getElementById("detail");
+    const n = state.sel;
+    if (!n) { el.innerHTML = `<p class="hint">Select a county on the map or in the list.</p>`; return; }
+    const head = `<h2>${n}<small lang="ga">${IRISH[n]}</small></h2>`;
+    const c = data.counties[n], y = state.year, l = LAYER[state.code];
+    const male = c.players[l.m][y], fem = c.players[l.f][y];
+    const share = fem / (male + fem);
+    const items = state.gender === "gap"
+      ? [[fmt(value(n)), "women's rate as a share of men's"], [rate(n, l.f).toFixed(1), NAMES[l.f] + " per 1,000 females"], [rate(n, l.m).toFixed(1), NAMES[l.m] + " per 1,000 males"]]
+      : [[value(n).toFixed(1), "players per 1,000 " + sexWord(state.gender)],
+         [c.players[l[state.gender]][y].toLocaleString("en-IE"), NAMES[l[state.gender]] + " players"],
+         [Math.round(share * 100) + "%", "of this code's players are women"]];
+    el.innerHTML = head + `<div class="stats">${items.map(([v, k]) => `<div class="stat"><div class="v">${v}</div><div class="k">${k}</div></div>`).join("")}</div>
+      <svg class="spark" id="spark" viewBox="0 0 320 100" aria-label="Trend for ${n}"></svg>`;
+    drawSpark(n);
+  }
+
+  function drawSpark(n) {
+    const l = LAYER[state.code], ys = data.years;
+    const series = [
+      { key: l.m, col: css(state.code === "hurling" ? "--hurl-hi" : "--foot-hi"), dash: null },
+      { key: l.f, col: css("--gap-hi"), dash: "4 3" },
+    ].map(s => ({ ...s, pts: ys.map(y => [y, rate(n, s.key, y)]) }));
+    const W = 320, H = 100, padL = 26, padR = 8, padT = 26, padB = 16;
+    const x = d3.scaleLinear().domain(d3.extent(ys)).range([padL, W - padR]);
+    const ymax = d3.max(series, s => d3.max(s.pts, p => p[1])) * 1.1;
+    const yS = d3.scaleLinear().domain([0, ymax]).nice(3).range([H - padB, padT]);
+    const g = d3.select("#spark");
+    yS.ticks(3).forEach(t => {
+      g.append("line").attr("x1", padL).attr("x2", W - padR).attr("y1", yS(t)).attr("y2", yS(t)).attr("stroke", css("--line"));
+      g.append("text").attr("x", padL - 4).attr("y", yS(t) + 3).attr("text-anchor", "end").text(t);
+    });
+    g.append("line").attr("x1", x(state.year)).attr("x2", x(state.year)).attr("y1", padT - 4).attr("y2", H - padB).attr("stroke", css("--muted")).attr("stroke-dasharray", "2 2");
+    const line = d3.line().x(p => x(p[0])).y(p => yS(p[1]));
+    series.forEach(s => {
+      g.append("path").attr("d", line(s.pts)).attr("fill", "none").attr("stroke", s.col).attr("stroke-width", 2).attr("stroke-dasharray", s.dash).attr("vector-effect", "non-scaling-stroke");
+      const cur = s.pts.find(p => p[0] === state.year);
+      g.append("circle").attr("cx", x(cur[0])).attr("cy", yS(cur[1])).attr("r", 3).attr("fill", s.col);
+    });
+    g.append("text").attr("class", "key").attr("x", padL).attr("y", 12).style("fill", series[0].col).text("— " + NAMES[l.m]);
+    g.append("text").attr("class", "key").attr("x", padL + 130).attr("y", 12).style("fill", series[1].col).text("- - " + NAMES[l.f]);
+    g.append("text").attr("x", padL).attr("y", H - 3).text(ys[0]);
+    g.append("text").attr("x", W - padR).attr("y", H - 3).attr("text-anchor", "end").text(ys[ys.length - 1]);
+  }
+
+  function renderNotice() {
+    document.getElementById("notice").innerHTML =
+      `<strong>Illustrative.</strong> Population figures are real census data. Player numbers are placeholders shaped to look plausible, not real registrations.`;
+  }
+
+  function render() {
+    buildColors();
+    paths.attr("fill", d => fill(value(d.properties.name)))
+      .classed("sel", d => d.properties.name === state.sel)
+      .select("title").text(d => `${d.properties.name}: ${fmt(value(d.properties.name))}`);
+    document.getElementById("layerName").textContent = layerName();
+    document.getElementById("yearBig").textContent = state.year;
+    renderNotice(); renderLegend(); renderRank(); renderDetail();
+  }
+
+  function bindSeg(attr, key) {
+    document.querySelectorAll(`[data-${attr}]`).forEach(b => b.addEventListener("click", () => {
+      state[key] = b.dataset[attr];
+      document.querySelectorAll(`[data-${attr}]`).forEach(x => x.setAttribute("aria-pressed", x === b));
+      render();
+    }));
+  }
+  bindSeg("code", "code"); bindSeg("gender", "gender");
+  yearInput.addEventListener("input", () => { state.year = +yearInput.value; render(); });
+
+  const playBtn = document.getElementById("play"), playIcon = document.getElementById("playIcon");
+  function stop() {
+    clearInterval(state.playing); state.playing = null;
+    playIcon.innerHTML = '<path d="M3 1.5v13l11-6.5z"/>'; playBtn.setAttribute("aria-label", "Play timeline");
+  }
+  playBtn.addEventListener("click", () => {
+    if (state.playing) return stop();
+    if (state.year >= lastYear) state.year = data.years[0];
+    playIcon.innerHTML = '<path d="M3 2h3.5v12H3zM9.5 2H13v12H9.5z"/>'; playBtn.setAttribute("aria-label", "Pause timeline");
+    const step = () => {
+      yearInput.value = state.year; render();
+      if (state.year >= lastYear) return stop();
+      state.year++;
+    };
+    step(); state.playing = setInterval(step, 600);
+  });
+
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", render);
+  new MutationObserver(render).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+
+  render();
+})();
+</script>
+</html>
