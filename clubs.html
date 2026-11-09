@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Club Heartlands</title>
+<link rel="stylesheet" href="css/swiss.css">
+<style>
+:root { --area-empty: #f6f6f6; --area-edge: #ffffff; --bubble: #d52b1e; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --area-empty: #1a1a1a; --area-edge: #0e0e0e; --bubble: #ff5a4a; } }
+:root[data-theme="dark"] { --area-empty: #1a1a1a; --area-edge: #0e0e0e; --bubble: #ff5a4a; }
+[hidden] { display: none !important; }
+#map path.club { cursor: pointer; transition: fill .3s linear; }
+#map path.ed-empty { fill: var(--area-empty); }
+#map path.edges { fill: none; stroke: var(--area-edge); stroke-width: .8; pointer-events: none; }
+#map path.sel { fill: none; stroke: var(--fg); stroke-width: 2.2; pointer-events: none; }
+#map path.county-lines { fill: none; stroke: var(--fg); stroke-width: 1.1; stroke-dasharray: 4 3; pointer-events: none; }
+#map circle.bubble { fill: var(--bubble); fill-opacity: .55; stroke: var(--bubble); stroke-width: 1; cursor: pointer; }
+#map circle.bubble.on { fill-opacity: .9; stroke: var(--fg); stroke-width: 2; }
+#map path, #map circle { vector-effect: non-scaling-stroke; }
+@media (prefers-reduced-motion: reduce) { #map path.club { transition: none; } }
+.zoom { position: absolute; right: 0; top: 0; display: flex; flex-direction: column; border: 1px solid var(--fg); background: var(--bg); }
+.zoom button { width: 32px; height: 32px; border: 0; border-bottom: 1px solid var(--fg); background: transparent; color: var(--fg); font: 700 16px/1 var(--sans); cursor: pointer; }
+.zoom button:last-child { border-bottom: 0; font-size: 11px; }
+.zoom-hint { font-size: 11px; color: var(--muted); margin: 4px 0 0; }
+.bubble-key { display: flex; align-items: flex-end; gap: 18px; }
+.bubble-key div { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.bubble-key span { display: block; border-radius: 50%; background: var(--bubble); opacity: .55; }
+.swatch-row { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); }
+.swatch-row i { width: 18px; height: 12px; background: var(--area-empty); border: 1px solid var(--line); }
+select { font: 500 14px var(--sans); color: var(--fg); background: var(--bg); border: 1px solid var(--fg); border-radius: 0; padding: 9px 10px; }
+.rank button { grid-template-columns: 24px 150px minmax(0, 1fr) 56px; }
+.eds { font-size: 12px; color: var(--muted); margin: 0; }
+.flag { color: var(--accent); font-weight: 700; }
+.empty-state { grid-column: 1 / -1; border-top: 2px solid var(--rule); padding-top: 12px; }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Club Heartlands</h1>
+    <p>Players at each club, against the population of the area around it. Rural clubs can have a far higher share of local girls and boys playing, while city clubs can have more players in total.</p>
+  </header>
+  <div class="notice" role="note" id="notice">Loading…</div>
+
+  <div class="main" id="main">
+    <div class="mapbox">
+      <div class="layer-title" aria-live="polite"><div class="name" id="layerName"></div><div class="year" id="yearBig"></div></div>
+      <div class="zoom" role="group" aria-label="Zoom">
+        <button id="zIn" aria-label="Zoom in">+</button><button id="zOut" aria-label="Zoom out">−</button><button id="zReset" aria-label="Reset zoom">ALL</button>
+      </div>
+      <svg id="map" role="img" aria-label="Map of club areas"></svg>
+      <p class="zoom-hint">Drag to pan. Use the buttons, or hold Ctrl or ⌘ and scroll, to zoom.</p>
+      <div class="legend" id="legend"></div>
+    </div>
+
+    <div class="panel">
+      <div class="controls">
+        <div class="ctl">
+          <label class="label" for="dataset">Data</label>
+          <select id="dataset"></select>
+        </div>
+        <div class="ctl">
+          <span class="label" id="lblMeasure">Show</span>
+          <div class="seg" role="group" aria-labelledby="lblMeasure">
+            <button data-measure="rate" aria-pressed="true">Players per head</button>
+            <button data-measure="total" aria-pressed="false">Total players</button>
+          </div>
+        </div>
+        <div class="ctl">
+          <span class="label" id="lblBorders">County borders</span>
+          <div class="seg" role="group" aria-labelledby="lblBorders">
+            <button data-borders="off" aria-pressed="true">Hide</button>
+            <button data-borders="on" aria-pressed="false">Show</button>
+          </div>
+        </div>
+        <div class="ctl">
+          <label class="label" for="year">Season</label>
+          <div class="timeline">
+            <button class="play" id="play" aria-label="Play timeline"><svg viewBox="0 0 16 16" id="playIcon"><path d="M3 1.5v13l11-6.5z"/></svg></button>
+            <div class="slider">
+              <input type="range" id="year" step="1">
+              <div class="ends"><span id="yMin"></span><span id="yMax"></span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" id="detail"><p class="hint">Select a club on the map or in the list.</p></div>
+
+      <div class="card">
+        <div class="ctl"><span class="label" id="rankLabel">Clubs</span></div>
+        <div class="rank" id="rank"></div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p>Players: registrations by club, supplied by the county board. Not yet published; this page reads them from a local file.</p>
+    <p>Club areas: built from Census 2022 electoral divisions. Each division is given to the nearest club, then checked by hand in the <a href="club-areas.html">club area editor</a>. Real club catchments follow parish lines and can overlap, so treat the areas as estimates.</p>
+    <p>Population: CSO Census 2022 Small Area Population Statistics by electoral division, by sex. The same 2022 figures are used for every season. Boundaries: CSO Electoral Divisions 2022 and county outlines © Tailte Éireann, <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>; Northern Ireland © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>.</p>
+    <p>Club places geocoded with OpenStreetMap Nominatim, with some pinned by hand. <a href="index.html">County map</a>.</p>
+  </footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
+<script src="js/clubdata.js"></script>
+<script>
+(async function () {
+  const RATE_BINS = [10, 20, 40, 60, 80, 120, 160];
+  const W = 600;
+  const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+  const fmt = n => Math.round(n).toLocaleString("en-IE");
+
+  const list = await ClubData.manifest();
+  const sel = document.getElementById("dataset");
+  if (!list.length) {
+    document.getElementById("notice").innerHTML = "<strong>No club data here.</strong> Player figures aren't published yet. Run the site locally with the data files in data/private/players.";
+    document.getElementById("main").innerHTML = "";
+    return;
+  }
+  sel.innerHTML = list.map((e, i) => `<option value="${i}">${e.county} ${ClubData.CODE_NAMES[e.code].toLowerCase()}</option>`).join("");
+
+  const counties = await fetch("data/counties.geojson").then(r => r.json());
+  const state = { measure: "rate", borders: "off", year: null, sel: null, playing: null };
+  let D; // current dataset
+
+  // ---- map scaffolding ----
+  const svg = d3.select("#map");
+  const root = svg.append("g");
+  const gEmpty = root.append("g"), gAreas = root.append("g"), gEdges = root.append("g"),
+        gCounty = root.append("g"), gSel = root.append("g"), gBub = root.append("g");
+  const zoom = d3.zoom().scaleExtent([1, 12])
+    .filter(e => e.type === "wheel" ? (e.ctrlKey || e.metaKey) : !e.button)
+    .on("zoom", e => { root.attr("transform", e.transform); gBub.selectAll("circle").attr("r", d => d.r / e.transform.k); });
+  svg.call(zoom);
+  document.getElementById("zIn").onclick = () => svg.transition().call(zoom.scaleBy, 1.6);
+  document.getElementById("zOut").onclick = () => svg.transition().call(zoom.scaleBy, 1 / 1.6);
+  document.getElementById("zReset").onclick = () => svg.transition().call(zoom.transform, d3.zoomIdentity);
+
+  async function loadDataset(i) {
+    const entry = list[i];
+    const [pl, ar] = await Promise.all([ClubData.loadPlayers(entry), ClubData.loadAreas(entry.county)]);
+    const sex = ClubData.SEX[entry.code];
+    const stats = ClubData.clubStats(ar.eds, ar.areas.assignments);
+    const clubs = Object.keys(pl.players).map(name => ({
+      name, players: pl.players[name], area: stats[name] || null,
+      pop: stats[name] ? stats[name][sex] : null, info: ar.anchors[name] || {},
+    }));
+    D = { entry, sex, ...pl, ...ar, clubs, byName: Object.fromEntries(clubs.map(c => [c.name, c])) };
+    state.year = D.years[D.years.length - 1];
+    if (!state.sel || !D.byName[state.sel]) state.sel = d3.greatest(clubs, c => c.players[state.year]).name;
+    const yi = document.getElementById("year");
+    yi.min = D.years[0]; yi.max = state.year; yi.value = state.year;
+    document.getElementById("yMin").textContent = D.years[0];
+    document.getElementById("yMax").textContent = state.year;
+    draw();
+  }
+
+  function draw() {
+    const fc = topojson.feature(D.topo, D.topo.objects.eds);
+    const proj = d3.geoTransverseMercator().rotate([8, 0]).fitWidth(W - 20, fc);
+    const path = d3.geoPath(proj);
+    const [[, y0], [, y1]] = path.bounds(fc);
+    const top = 120, H = Math.ceil(y1 - y0 + top + 10);
+    proj.translate([proj.translate()[0] + 10, proj.translate()[1] - y0 + top]);
+    svg.attr("viewBox", `0 0 ${W} ${H}`);
+    zoom.extent([[0, 0], [W, H]]).translateExtent([[-W, -H], [2 * W, 2 * H]]);
+    svg.call(zoom.transform, d3.zoomIdentity);
+
+    const assign = D.areas.assignments, sexWord = D.sex === "f" ? "females" : "males";
+    gEmpty.selectAll("path").data(D.eds.filter(g => !assign[g.properties.id]).map(g => topojson.feature(D.topo, g)))
+      .join("path").attr("class", "ed-empty").attr("d", path)
+      .append("title").text(d => `${d.properties.name}: no club in this data`);
+    const withArea = D.clubs.filter(c => c.area);
+    withArea.forEach(c => { c.shape = topojson.merge(D.topo, c.area.eds); c.centroid = path.centroid(c.shape); });
+    gAreas.selectAll("path").data(withArea, c => c.name).join("path").attr("class", "club").attr("d", c => path(c.shape))
+      .on("click", (e, c) => select(c.name)).call(p => p.selectAll("title").data(c => [c]).join("title"));
+    gEdges.selectAll("path").data([topojson.mesh(D.topo, D.topo.objects.eds, (a, b) => assign[a.properties.id] !== assign[b.properties.id])])
+      .join("path").attr("class", "edges").attr("d", path);
+    gCounty.selectAll("path").data([counties]).join("path").attr("class", "county-lines").attr("d", path);
+    D.path = path; D.sexWord = sexWord;
+    render();
+  }
+
+  // ---- values ----
+  const players = c => c.players[state.year] || 0;
+  const rate = c => c.pop ? players(c) / c.pop * 1000 : null;
+  const value = c => state.measure === "rate" ? rate(c) : players(c);
+  const fmtVal = c => state.measure === "rate" ? (rate(c) == null ? "–" : rate(c).toFixed(0)) : fmt(players(c));
+  function colors() {
+    const lo = css("--ramp-lo"), hi = css("--hurl-hi");
+    return d3.scaleThreshold().domain(RATE_BINS).range(d3.range(RATE_BINS.length + 1).map(i => d3.interpolateLab(lo, hi)(0.08 + 0.92 * i / RATE_BINS.length)));
+  }
+
+  function render() {
+    const col = colors(), total = state.measure === "total";
+    const maxP = d3.max(D.clubs, c => d3.max(Object.values(c.players)));
+    const r = d3.scaleSqrt().domain([0, maxP]).range([0, 26]);
+    const k = d3.zoomTransform(svg.node()).k;
+    gAreas.selectAll("path").attr("fill", c => total ? css("--ramp-lo") : col(rate(c)))
+      .select("title").text(c => `${c.name}: ${fmt(players(c))} players, ${rate(c).toFixed(0)} per 1,000 ${D.sexWord}`);
+    gCounty.attr("display", state.borders === "on" ? null : "none");
+    gSel.selectAll("path").data(D.byName[state.sel]?.shape ? [D.byName[state.sel]] : []).join("path").attr("class", "sel").attr("d", c => D.path(c.shape));
+    const bubbles = total ? D.clubs.filter(c => c.area && players(c) > 0).sort((a, b) => players(b) - players(a)) : [];
+    gBub.selectAll("circle").data(bubbles.map(c => ({ c, r: r(players(c)) })), d => d.c.name)
+      .join("circle").attr("class", d => "bubble" + (d.c.name === state.sel ? " on" : ""))
+      .attr("cx", d => d.c.centroid[0]).attr("cy", d => d.c.centroid[1]).attr("r", d => d.r / k)
+      .on("click", (e, d) => select(d.c.name))
+      .call(s => s.selectAll("title").data(d => [d]).join("title").text(d => `${d.c.name}: ${fmt(players(d.c))} players`));
+
+    document.getElementById("layerName").textContent = `${D.entry.county} ${ClubData.CODE_NAMES[D.entry.code].toLowerCase()}`;
+    document.getElementById("yearBig").textContent = state.year;
+    const unplaced = D.clubs.filter(c => !c.area && players(c) > 0).map(c => c.name);
+    document.getElementById("notice").innerHTML = `<strong>Real registrations, estimated areas.</strong> ${D.entry.source}. ` +
+      (unplaced.length ? `Not on the map yet: ${unplaced.join(", ")}; <a href="club-areas.html">give them an area</a>.` : "");
+    renderLegend(col, r); renderRank(); renderDetail();
+  }
+
+  function renderLegend(col, r) {
+    const el = document.getElementById("legend");
+    const empty = `<div class="swatch-row"><i></i>No club in this data</div>`;
+    if (state.measure === "rate") {
+      el.innerHTML = `<span class="label">Players per 1,000 ${D.sexWord} in the club's area</span>
+        <div class="bins">${col.range().map(c => `<span style="background:${c}"></span>`).join("")}</div>
+        <div class="ticks">${["", ...RATE_BINS].map(t => `<span>${t}</span>`).join("")}</div>${empty}`;
+    } else {
+      el.innerHTML = `<span class="label">Registered players</span>
+        <div class="bubble-key">${[50, 150, 300].map(v => `<div><span style="width:${2 * r(v)}px;height:${2 * r(v)}px"></span>${v}</div>`).join("")}</div>${empty}`;
+    }
+  }
+
+  function renderRank() {
+    const rows = D.clubs.filter(c => value(c) != null && players(c) > 0).sort((a, b) => value(b) - value(a));
+    const max = d3.max(rows, value) || 1, col = colors();
+    document.getElementById("rankLabel").textContent = `${rows.length} clubs, ${state.year}, by ${state.measure === "rate" ? "players per 1,000 " + D.sexWord : "total players"}`;
+    document.getElementById("rank").innerHTML = rows.map((c, i) => `<button data-name="${c.name}" class="${c.name === state.sel ? "sel" : ""}">
+      <span class="n">${i + 1}</span><span>${c.name}</span>
+      <span class="bar" style="width:${(value(c) / max * 100).toFixed(1)}%;background:${state.measure === "rate" ? col(value(c)) : css("--bubble")}"></span>
+      <span class="val">${fmtVal(c)}</span></button>`).join("");
+  }
+  document.getElementById("rank").addEventListener("click", e => { const b = e.target.closest("button[data-name]"); if (b) select(b.dataset.name); });
+
+  function renderDetail() {
+    const c = D.byName[state.sel], el = document.getElementById("detail");
+    if (!c) { el.innerHTML = `<p class="hint">Select a club on the map or in the list.</p>`; return; }
+    const flag = c.info.confidence && c.info.confidence !== "high" ? `<p class="eds"><span class="flag">Area to check.</span> ${c.info.note || ""}</p>` : "";
+    const stats = c.area ? [[fmt(players(c)), `players in ${state.year}`], [rate(c).toFixed(0), `per 1,000 ${D.sexWord} in the area`], [fmt(c.pop), `${D.sexWord} living in the area (2022)`]]
+                         : [[fmt(players(c)), `players in ${state.year}`]];
+    el.innerHTML = `<h2>${c.name}<small>${c.area ? `${c.area.eds.length} electoral divisions` : "No area assigned yet"}</small></h2>
+      <div class="stats">${stats.map(([v, k]) => `<div class="stat"><div class="v">${v}</div><div class="k">${k}</div></div>`).join("")}</div>
+      <svg class="spark" id="spark" viewBox="0 0 320 100" aria-label="Players at ${c.name} by season"></svg>
+      ${c.area ? `<p class="eds">Area: ${c.area.eds.map(g => g.properties.name).sort().join(", ")}.</p>` : ""}${flag}`;
+    drawSpark(c);
+  }
+
+  function drawSpark(c) {
+    const ys = D.years, W = 320, H = 100, padL = 30, padR = 8, padT = 22, padB = 16;
+    const x = d3.scaleLinear().domain(d3.extent(ys)).range([padL, W - padR]);
+    const y = d3.scaleLinear().domain([0, d3.max(ys, v => c.players[v]) * 1.1 || 1]).nice(3).range([H - padB, padT]);
+    const g = d3.select("#spark"), stroke = css("--hurl-hi");
+    y.ticks(3).forEach(t => {
+      g.append("line").attr("x1", padL).attr("x2", W - padR).attr("y1", y(t)).attr("y2", y(t)).attr("stroke", css("--line"));
+      g.append("text").attr("x", padL - 4).attr("y", y(t) + 3).attr("text-anchor", "end").text(t);
+    });
+    g.append("line").attr("x1", x(state.year)).attr("x2", x(state.year)).attr("y1", padT - 4).attr("y2", H - padB).attr("stroke", css("--muted")).attr("stroke-dasharray", "2 2");
+    g.append("path").attr("d", d3.line().x(v => x(v)).y(v => y(c.players[v]))(ys)).attr("fill", "none").attr("stroke", stroke).attr("stroke-width", 2);
+    g.append("circle").attr("cx", x(state.year)).attr("cy", y(players(c))).attr("r", 3).attr("fill", stroke);
+    g.append("text").attr("class", "key").attr("x", padL).attr("y", 12).style("fill", stroke).text("— Registered players");
+    g.append("text").attr("x", padL).attr("y", H - 3).text(ys[0]);
+    g.append("text").attr("x", W - padR).attr("y", H - 3).attr("text-anchor", "end").text(ys[ys.length - 1]);
+  }
+
+  function select(name) { state.sel = name; render(); }
+
+  // ---- controls ----
+  function bindSeg(attr) {
+    document.querySelectorAll(`[data-${attr}]`).forEach(b => b.addEventListener("click", () => {
+      state[attr] = b.dataset[attr];
+      document.querySelectorAll(`[data-${attr}]`).forEach(x => x.setAttribute("aria-pressed", x === b));
+      render();
+    }));
+  }
+  bindSeg("measure"); bindSeg("borders");
+  sel.addEventListener("change", () => { stop(); loadDataset(+sel.value); });
+  const yearInput = document.getElementById("year");
+  yearInput.addEventListener("input", () => { state.year = +yearInput.value; render(); });
+  const playBtn = document.getElementById("play"), playIcon = document.getElementById("playIcon");
+  function stop() {
+    clearInterval(state.playing); state.playing = null;
+    playIcon.innerHTML = '<path d="M3 1.5v13l11-6.5z"/>'; playBtn.setAttribute("aria-label", "Play timeline");
+  }
+  playBtn.addEventListener("click", () => {
+    if (state.playing) return stop();
+    const last = D.years[D.years.length - 1];
+    if (state.year >= last) state.year = D.years[0];
+    playIcon.innerHTML = '<path d="M3 2h3.5v12H3zM9.5 2H13v12H9.5z"/>'; playBtn.setAttribute("aria-label", "Pause timeline");
+    const step = () => { yearInput.value = state.year; render(); if (state.year >= last) return stop(); state.year++; };
+    step(); state.playing = setInterval(step, 700);
+  });
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => D && render());
+
+  await loadDataset(0);
+})();
+</script>
+</html>

@@ -1,0 +1,517 @@
+{
+ "Abbeyknockmoy": {
+  "points": [
+   {
+    "place": "Abbeyknockmoy",
+    "lat": 53.4371103,
+    "lon": -8.7492064
+   }
+  ],
+  "confidence": "high",
+  "note": ""
+ },
+ "Ahascragh/Caltra": {
+  "points": [
+   {
+    "place": "Ahascragh",
+    "lat": 53.3973146,
+    "lon": -8.332594
+   },
+   {
+    "place": "Caltra",
+    "lat": 53.4355055,
+    "lon": -8.4369796
+   }
+  ],
+  "confidence": "high",
+  "note": "Two-parish club"
+ },
+ "Annaghdown": {
+  "points": [
+   {
+    "place": "Annaghdown",
+    "lat": 53.4015042,
+    "lon": -9.001442
+   },
+   {
+    "place": "Corrandulla",
+    "lat": 53.3983759,
+    "lon": -8.9938093
+   }
+  ],
+  "confidence": "high",
+  "note": ""
+ },
+ "Ardrahan": {
+  "points": [
+   {
+    "place": "Ardrahan",
+    "lat": 53.15675,
+    "lon": -8.8059911
+   }
+  ],
+  "confidence": "high",
+  "note": ""
+ },
+ "Athenry": {
+  "points": [
+   {
+    "place": "Athenry",
+    "lat": 53.3014222,
+    "lon": -8.7488683
+   }
+  ],
+  "confidence": "high",
+  "note": ""
+ },
+ "Atlantic Camogie": {
+  "points": [
+   {
+    "place": "Clifden",
+    "lat": 53.4884916,
+    "lon": -10.0210673
+   }
+  ],
+  "confidence": "medium",
+  "note": "Founded 2018 in Clifden, players from across west Connemara (City Tribune)"
+ },
+ "Ballinderreen": {
+  "points": [
+   {
+    "place": "Ballinderreen",
+    "lat": 53.1862518,
+    "lon": -8.9089205
+   }
+  ],
+  "confidence": "high",
+  "note": ""
+ },
+ "Beagh": {
+  "points": [
+   {
+    "place": "Shanaglish",
+    "lat": 53.0106742,
+    "lon": -8.8389224
+   }
+  ],
+  "confidence": "medium",
+  "note": "Beagh parish near Gort; based at Shanaglish"
+ },
+ "Ballygar": {
+  "points": [
+   {
+    "place": "Ballygar",
+    "lat": 53.5223233,
+    "lon": -8.3261381
+   }
+  ],
+  "confidence": "high",
+  "note": ""
+ },
+ "Cappataggle": {
+  "points": [
+   {
+    "place": "Cappataggle",
+    "lat": 53.276012,
+    "lon": -8.4104786
+   }
+  ],
+  "confidence": "high",
+  "note": ""
+ },
+ "Carnmore": {
+  "points": [
+   {
+    "place": "Carnmore",
+    "lat": 53.307818,
+    "lon": -8.8687513
+   }
+  ],
+  "confidence": "high",
+  "note": ""
+ },
+ "Castlegar": {
+  "points": [
+   {
+    "place": "Castlegar",
+    "lat": 53.2986919,
+    "lon": -9.0227579
+   }
+  ],
+  "confidence": "high",
+  "note": "Galway city"
+ },
+ "Clarinbridge": {
+  "points": [
+   {
+    "place": "Clarinbridge",
+    "lat": 53.2277017,
+    "lon": -8.8803111
+   }
+  ],
+  "confidence": "high",
+  "note": ""
+ },
+ "Cois Fharraige": {
+  "points": [
+   {
+    "place": "An Spidéal",
+    "lat": 53.2441182,
+    "lon": -9.305804
+   },
+   {
+    "place": "Indreabhán",
+    "lat": 53.246242,
+    "lon": -9.3651492
+   }
+  ],
+  "confidence": "high",
+  "note": ""
+ },
+ "Craughwell": {
+  "points": [
+   {
+    "place": "Craughwell",
+    "lat": 53.2251309,
+    "lon": -8.7358299
+   }
+  ],
+  "confidence": "high",
+  "note": ""
+ },
+ "Béal Atha Na Slua": {
+  "points": [
+   {
+    "place": "Ballinasloe",
+    "lat": 53.3302722,
+    "lon": -8.221376
+   }
+  ],
+  "confidence": "high",
+  "note": "Ballinasloe"
+ },
+ "Davitts": {
+  "points": [
+   {
+    "place": "Duniry",
+    "lat": 53.1338105,
+    "lon": -8.4102988
+   }
+  ],
+  "confidence": "medium",
+  "note": "East Galway club whose gatherings are in Duniry (Connacht Tribune)"
+ },
+ "Eyrecourt": {
+  "points": [
+   {
+    "place": "Eyrecourt",
+    "lat": 53.200146,
+    "lon": -8.1317817
+   }
+  ],
+  "confidence": "high",
+  "note": ""
+ },
+ "Kilconieron": {
+  "points": [
+   {
+    "place": "Kilconieron",
+    "lat": 53.24,
+    "lon": -8.63
+   }
+  ],
+  "confidence": "medium",
+  "note": "Pinned by hand between Athenry and Loughrea"
+ },
+ "Killimor": {
+  "points": [
+   {
+    "place": "Killimor",
+    "lat": 53.1650604,
+    "lon": -8.2887968
+   }
+  ],
+  "confidence": "high",
+  "note": ""
+ },
+ "Kiltormer": {
+  "points": [
+   {
+    "place": "Kiltormer",
+    "lat": 53.2359394,
+    "lon": -8.2716154
+   }
+  ],
+  "confidence": "high",
+  "note": ""
+ },
+ "Kiltulla/Killimordaly": {
+  "points": [
+   {
+    "place": "Kiltullagh",
+    "lat": 53.2758367,
+    "lon": -8.6420154
+   },
+   {
+    "place": "Killimordaly",
+    "lat": 53.3042159,
+    "lon": -8.5946805
+   }
+  ],
+  "confidence": "high",
+  "note": ""
+ },
+ "Kinvara": {
+  "points": [
+   {
+    "place": "Kinvara",
+    "lat": 53.1389892,
+    "lon": -8.9394261
+   }
+  ],
+  "confidence": "high",
+  "note": ""
+ },
+ "Liam Mellows": {
+  "points": [
+   {
+    "place": "Renmore",
+    "lat": 53.2759696,
+    "lon": -9.0208617
+   },
+   {
+    "place": "Ballybane",
+    "lat": 53.2861099,
+    "lon": -9.0075049
+   }
+  ],
+  "confidence": "medium",
+  "note": "East side of Galway city"
+ },
+ "Maigh Cuilinn": {
+  "points": [
+   {
+    "place": "Moycullen",
+    "lat": 53.3377067,
+    "lon": -9.1790603
+   }
+  ],
+  "confidence": "high",
+  "note": ""
+ },
+ "Mountbellew/Moylough": {
+  "points": [
+   {
+    "place": "Mountbellew",
+    "lat": 53.4695021,
+    "lon": -8.5019101
+   },
+   {
+    "place": "Moylough",
+    "lat": 53.4880839,
+    "lon": -8.5678014
+   }
+  ],
+  "confidence": "high",
+  "note": ""
+ },
+ "Mullagh": {
+  "points": [
+   {
+    "place": "Mullagh",
+    "lat": 53.163,
+    "lon": -8.4
+   }
+  ],
+  "confidence": "low",
+  "note": "Pinned by hand near Loughrea (Mullagh, Loughrea); check in the area editor"
+ },
+ "Oranmore-Maree": {
+  "points": [
+   {
+    "place": "Oranmore",
+    "lat": 53.2754881,
+    "lon": -8.9472704
+   },
+   {
+    "place": "Maree",
+    "lat": 53.2720652,
+    "lon": -8.9201846
+   }
+  ],
+  "confidence": "high",
+  "note": ""
+ },
+ "Pearses": {
+  "points": [
+   {
+    "place": "Ballymacward",
+    "lat": 53.3765564,
+    "lon": -8.4906365
+   },
+   {
+    "place": "Gurteen",
+    "lat": 53.3649719,
+    "lon": -8.5856894
+   }
+  ],
+  "confidence": "medium",
+  "note": "Pádraig Pearses: Ballymacward and Gurteen"
+ },
+ "Portumna": {
+  "points": [
+   {
+    "place": "Portumna",
+    "lat": 53.0923333,
+    "lon": -8.2192922
+   }
+  ],
+  "confidence": "high",
+  "note": ""
+ },
+ "Rahoon-Newcastle": {
+  "points": [
+   {
+    "place": "Rahoon",
+    "lat": 53.2884729,
+    "lon": -9.0952449
+   },
+   {
+    "place": "Newcastle",
+    "lat": 53.2798097,
+    "lon": -9.0718319
+   }
+  ],
+  "confidence": "high",
+  "note": "Galway city west"
+ },
+ "Salthill-Knocknacarra": {
+  "points": [
+   {
+    "place": "Salthill",
+    "lat": 53.2620258,
+    "lon": -9.0746256
+   },
+   {
+    "place": "Knocknacarra",
+    "lat": 53.268633,
+    "lon": -9.1073415
+   }
+  ],
+  "confidence": "high",
+  "note": "Galway city"
+ },
+ "Sarsfields": {
+  "points": [
+   {
+    "place": "New Inn",
+    "lat": 53.3001128,
+    "lon": -8.4897855
+   },
+   {
+    "place": "Bullaun",
+    "lat": 53.2477718,
+    "lon": -8.5542296
+   }
+  ],
+  "confidence": "high",
+  "note": "Parish of Bullaun, New Inn and Woodlawn"
+ },
+ "Shamrocks": {
+  "points": [
+   {
+    "place": "Loughrea",
+    "lat": 53.1981624,
+    "lon": -8.5690594
+   },
+   {
+    "place": "Kilnadeema",
+    "lat": 53.157,
+    "lon": -8.494
+   }
+  ],
+  "confidence": "medium",
+  "note": "Parishes of Loughrea, Kilnadeema and Leitrim (from you)"
+ },
+ "Skehana Menlough": {
+  "points": [
+   {
+    "place": "Skehana",
+    "lat": 53.4207033,
+    "lon": -8.6413036
+   },
+   {
+    "place": "Menlough",
+    "lat": 53.446,
+    "lon": -8.58
+   }
+  ],
+  "confidence": "high",
+  "note": ""
+ },
+ "St. Colmans": {
+  "points": [
+   {
+    "place": "Gort",
+    "lat": 53.0671685,
+    "lon": -8.8141817
+   },
+   {
+    "place": "Kilbeacanty",
+    "lat": 53.0650817,
+    "lon": -8.7736637
+   }
+  ],
+  "confidence": "high",
+  "note": "Gort, Beagh and Kilbeacanty communities (Galway Bay FM)"
+ },
+ "St Thomas'": {
+  "points": [
+   {
+    "place": "Peterswell",
+    "lat": 53.1126173,
+    "lon": -8.7376768
+   },
+   {
+    "place": "Kilchreest",
+    "lat": 53.1784884,
+    "lon": -8.6527642
+   }
+  ],
+  "confidence": "medium",
+  "note": ""
+ },
+ "Sylane": {
+  "points": [
+   {
+    "place": "Sylane",
+    "lat": 53.533,
+    "lon": -8.773
+   }
+  ],
+  "confidence": "low",
+  "note": "Pinned by hand east of Tuam; check in the area editor"
+ },
+ "Tuam Stars": {
+  "points": [
+   {
+    "place": "Tuam",
+    "lat": 53.5147915,
+    "lon": -8.8512875
+   }
+  ],
+  "confidence": "high",
+  "note": ""
+ },
+ "Turloughmore": {
+  "points": [
+   {
+    "place": "Turloughmore",
+    "lat": 53.3766239,
+    "lon": -8.8704482
+   }
+  ],
+  "confidence": "high",
+  "note": ""
+ }
+}
