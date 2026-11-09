@@ -1,6 +1,6 @@
 // Shared loading for the club map and the club area editor.
 //
-// Player figures:  data/private/players/manifest.json lists one CSV per county and code,
+// Player figures:  data/players/manifest.json lists one CSV per county and code,
 //                  each with a "club" column then one column per year.
 // Club areas:      data/clubs/<county>_eds.topo.json   electoral divisions + population by sex
 //                  data/clubs/<county>_areas.json      electoral division id -> club
@@ -31,11 +31,11 @@ const ClubData = (() => {
   }
 
   async function manifest() {
-    try { return await json("data/private/players/manifest.json"); } catch { return []; }
+    try { return await json("data/players/manifest.json"); } catch { return []; }
   }
 
   async function loadPlayers(entry) {
-    const r = await fetch(`data/private/players/${entry.file}`, { cache: "no-store" });
+    const r = await fetch(`data/players/${entry.file}`, { cache: "no-store" });
     if (!r.ok) throw new Error(`${entry.file}: ${r.status}`);
     const [head, ...rows] = parseCSV(await r.text());
     const years = head.slice(1).map(Number);

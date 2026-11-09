@@ -94,7 +94,7 @@ select { font: 500 14px var(--sans); color: var(--fg); background: var(--bg); bo
   </div>
 
   <footer>
-    <p>Players: registrations by club, supplied by the county board. Not yet published; this page reads them from a local file.</p>
+    <p>Players: registrations by club, supplied by the county board (Galway Camogie for Galway camogie).</p>
     <p>Club areas: built from Census 2022 electoral divisions. Each division is given to the nearest club, then checked by hand in the <a href="club-areas.html">club area editor</a>. Real club catchments follow parish lines and can overlap, so treat the areas as estimates.</p>
     <p>Population: CSO Census 2022 Small Area Population Statistics by electoral division, by sex. The same 2022 figures are used for every season. Boundaries: CSO Electoral Divisions 2022 and county outlines © Tailte Éireann, <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>; Northern Ireland © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>.</p>
     <p>Club places geocoded with OpenStreetMap Nominatim, with some pinned by hand. <a href="index.html">County map</a>.</p>
@@ -114,7 +114,7 @@ select { font: 500 14px var(--sans); color: var(--fg); background: var(--bg); bo
   const list = await ClubData.manifest();
   const sel = document.getElementById("dataset");
   if (!list.length) {
-    document.getElementById("notice").innerHTML = "<strong>No club data here.</strong> Player figures aren't published yet. Run the site locally with the data files in data/private/players.";
+    document.getElementById("notice").innerHTML = "<strong>No club data found.</strong> Add player files to data/players and list them in manifest.json.";
     document.getElementById("main").innerHTML = "";
     return;
   }
