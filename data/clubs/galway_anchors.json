@@ -87,15 +87,9 @@
   "note": ""
  },
  "Beagh": {
-  "points": [
-   {
-    "place": "Shanaglish",
-    "lat": 53.0106742,
-    "lon": -8.8389224
-   }
-  ],
-  "confidence": "medium",
-  "note": "Beagh parish near Gort; based at Shanaglish"
+  "points": [],
+  "confidence": "shared",
+  "note": "Inside St Colman's area (Gort, Kilbeacanty, Beagh, Tubber); players only in 2025, so no area of its own"
  },
  "Ballygar": {
   "points": [
@@ -460,10 +454,20 @@
     "place": "Kilbeacanty",
     "lat": 53.0650817,
     "lon": -8.7736637
+   },
+   {
+    "place": "Shanaglish",
+    "lat": 53.0106742,
+    "lon": -8.8389224
+   },
+   {
+    "place": "Tubber",
+    "lat": 53.016,
+    "lon": -8.887
    }
   ],
   "confidence": "high",
-  "note": "Gort, Beagh and Kilbeacanty communities (Galway Bay FM)"
+  "note": "Parishes of Gort, Kilbeacanty, Beagh and Tubber (from you)"
  },
  "St Thomas'": {
   "points": [

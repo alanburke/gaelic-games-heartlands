@@ -210,7 +210,7 @@ select { font: 500 14px var(--sans); color: var(--fg); background: var(--bg); bo
 
     document.getElementById("layerName").textContent = `${D.entry.county} ${ClubData.CODE_NAMES[D.entry.code].toLowerCase()}`;
     document.getElementById("yearBig").textContent = state.year;
-    const unplaced = D.clubs.filter(c => !c.area && players(c) > 0).map(c => c.name);
+    const unplaced = D.clubs.filter(c => !c.area && players(c) > 0 && c.info.confidence !== "shared").map(c => c.name);
     document.getElementById("notice").innerHTML = `<strong>Real registrations, estimated areas.</strong> ${D.entry.source}. ` +
       (unplaced.length ? `Not on the map yet: ${unplaced.join(", ")}; <a href="club-areas.html">give them an area</a>.` : "");
     renderLegend(col, r); renderRank(); renderDetail();
