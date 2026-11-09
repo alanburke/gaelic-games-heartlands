@@ -20,3 +20,12 @@ Then open http://localhost:8000.
 - **Boundaries (Northern Ireland):** historic counties © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright), ODbL.
 
 `scripts/build_data.py` builds `data/participation.json` and `scripts/build_boundaries.sh` builds `data/counties.geojson`. Both expect the raw source files in a `source/` folder, which isn't included here.
+
+## Club map (work in progress)
+
+`clubs.html` maps real registrations by club against the population of each club's area, as players per head or as total players. `club-areas.html` is an editor for which census electoral divisions belong to each club.
+
+- **Player figures** live in `data/players/` (one CSV per county and code, listed in `manifest.json`). Anything in `data/private/` stays out of git.
+- **Club areas:** `python3 scripts/build_club_areas.py galway` geocodes each club's places from `data/clubs/galway_clubs.csv` and gives every electoral division to the nearest club as a first guess. Fix it in the editor.
+- **Run locally** with `python3 scripts/serve.py`, then open http://127.0.0.1:8766/clubs.html. This server also lets the editor save.
+- **Population:** CSO Census 2022 Small Area Population Statistics by electoral division (CC BY 4.0). Electoral division boundaries © Tailte Éireann, CC BY 4.0. The raw downloads go in `source/`, which is excluded from git.

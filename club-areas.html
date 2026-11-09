@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Club Area Editor</title>
+<link rel="stylesheet" href="css/swiss.css">
+<style>
+[hidden] { display: none !important; }
+#map path.ed { stroke: var(--bg); stroke-width: .5; cursor: crosshair; }
+#map path.ed:hover { stroke: var(--fg); stroke-width: 1.5; }
+#map path.club-edge { fill: none; stroke: var(--fg); stroke-width: 1.2; pointer-events: none; }
+#map path.brush { fill: none; stroke: var(--fg); stroke-width: 3; pointer-events: none; }
+#map circle.anchor { fill: var(--bg); stroke: var(--fg); stroke-width: 1.2; pointer-events: none; }
+#map text.lbl { font: 700 10px var(--sans); fill: var(--fg); paint-order: stroke; stroke: var(--bg); stroke-width: 3px; pointer-events: none; text-anchor: middle; }
+#map path, #map circle { vector-effect: non-scaling-stroke; }
+.zoom { position: absolute; right: 0; top: 0; display: flex; flex-direction: column; border: 1px solid var(--fg); background: var(--bg); }
+.zoom button { width: 32px; height: 32px; border: 0; border-bottom: 1px solid var(--fg); background: transparent; color: var(--fg); font: 700 16px/1 var(--sans); cursor: pointer; }
+.zoom button:last-child { border-bottom: 0; font-size: 11px; }
+.tip { min-height: 2.6em; font-size: 13px; margin: 6px 0 0; }
+.clubs { display: flex; flex-direction: column; max-height: 520px; overflow-y: auto; }
+.clubs button { display: grid; grid-template-columns: 14px minmax(0, 1fr) 40px 64px 44px; gap: 8px; align-items: center; width: 100%; padding: 6px 0; background: transparent; border: 0; border-bottom: 1px solid var(--line); color: var(--fg); font: 13px var(--sans); text-align: left; cursor: pointer; font-variant-numeric: tabular-nums; }
+.clubs button:hover { background: var(--ramp-lo); }
+.clubs button[aria-pressed="true"] { font-weight: 700; outline: 2px solid var(--fg); outline-offset: -2px; }
+.clubs i { width: 14px; height: 14px; display: block; }
+.clubs .num { text-align: right; color: var(--muted); }
+.clubs .flag { color: var(--accent); font-weight: 700; }
+.head { display: grid; grid-template-columns: 14px minmax(0, 1fr) 40px 64px 44px; gap: 8px; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; border-bottom: 1px solid var(--rule); padding-bottom: 4px; }
+.head span:nth-child(n+3) { text-align: right; }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.actions button { font: 700 14px var(--sans); padding: 10px 14px; border: 1px solid var(--fg); background: var(--fg); color: var(--bg); border-radius: 0; cursor: pointer; }
+.actions button.secondary { background: transparent; color: var(--fg); }
+.actions button:disabled { opacity: .4; cursor: default; }
+.status { font-size: 13px; color: var(--muted); margin: 0; }
+.status.ok { color: var(--fg); }
+select { font: 500 14px var(--sans); color: var(--fg); background: var(--bg); border: 1px solid var(--fg); border-radius: 0; padding: 9px 10px; }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Club Area Editor</h1>
+    <p>Pick a club, then click electoral divisions on the map to give them to it. Click a division the club already has to clear it. Save when you're done; the club map picks up the change straight away.</p>
+  </header>
+  <div class="notice" role="note" id="notice">Loading…</div>
+
+  <div class="main">
+    <div class="mapbox">
+      <div class="zoom" role="group" aria-label="Zoom">
+        <button id="zIn" aria-label="Zoom in">+</button><button id="zOut" aria-label="Zoom out">−</button><button id="zReset" aria-label="Reset zoom">ALL</button>
+      </div>
+      <svg id="map" role="img" aria-label="Electoral divisions coloured by club"></svg>
+      <p class="tip" id="tip">Hover over a division to see its name and population. Drag to pan; hold Ctrl or ⌘ and scroll to zoom.</p>
+    </div>
+
+    <div class="panel">
+      <div class="controls">
+        <div class="ctl">
+          <label class="label" for="dataset">Data</label>
+          <select id="dataset"></select>
+        </div>
+        <div class="actions">
+          <button id="save" disabled>Save areas</button>
+          <button id="undo" class="secondary" disabled>Undo</button>
+          <button id="clearBrush" class="secondary">No club</button>
+        </div>
+        <p class="status" id="status">No changes yet.</p>
+      </div>
+
+      <div class="card">
+        <div class="ctl"><span class="label" id="brushLabel">Painting with: nothing selected</span></div>
+        <div class="head"><span></span><span>Club</span><span>Divs</span><span>Pop.</span><span>/1,000</span></div>
+        <div class="clubs" id="clubs"></div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p>Saving needs the local server: <code>python3 scripts/serve.py</code>, then open http://127.0.0.1:8766/club-areas.html. Without it, Save downloads the file instead; put it in data/clubs/.</p>
+    <p>Red names are clubs whose place I couldn't confirm, or that have no area yet. Per 1,000 uses the latest season and the 2022 census population of the matching sex.</p>
+  </footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
+<script src="js/clubdata.js"></script>
+<script>
+(async function () {
+  const W = 600;
+  const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+  const list = await ClubData.manifest();
+  const sel = document.getElementById("dataset");
+  if (!list.length) { document.getElementById("notice").textContent = "No player data found in data/players."; return; }
+  sel.innerHTML = list.map((e, i) => `<option value="${i}">${e.county} ${ClubData.CODE_NAMES[e.code].toLowerCase()}</option>`).join("");
+
+  const svg = d3.select("#map"), root = svg.append("g");
+  const gEd = root.append("g"), gEdge = root.append("g"), gBrush = root.append("g"), gAnchor = root.append("g"), gLbl = root.append("g");
+  const zoom = d3.zoom().scaleExtent([1, 16])
+    .filter(e => e.type === "wheel" ? (e.ctrlKey || e.metaKey) : !e.button)
+    .on("zoom", e => { root.attr("transform", e.transform); gLbl.selectAll("text").attr("font-size", 10 / e.transform.k).style("stroke-width", 3 / e.transform.k + "px"); gAnchor.selectAll("circle").attr("r", 2.5 / e.transform.k); });
+  svg.call(zoom);
+  document.getElementById("zIn").onclick = () => svg.transition().call(zoom.scaleBy, 1.6);
+  document.getElementById("zOut").onclick = () => svg.transition().call(zoom.scaleBy, 1 / 1.6);
+  document.getElementById("zReset").onclick = () => svg.transition().call(zoom.transform, d3.zoomIdentity);
+
+  let D, path, brush = null, history = [], dirty = false;
+  const palette = [...d3.schemeTableau10, ...d3.schemeSet3, ...d3.schemePastel1, ...d3.schemeDark2];
+
+  async function load(i) {
+    const entry = list[i];
+    const [pl, ar] = await Promise.all([ClubData.loadPlayers(entry), ClubData.loadAreas(entry.county)]);
+    D = { entry, ...pl, ...ar, sex: ClubData.SEX[entry.code], last: pl.years[pl.years.length - 1] };
+    D.names = Object.keys(pl.players).sort((a, b) => a.localeCompare(b));
+    D.color = Object.fromEntries(D.names.map((n, i) => [n, palette[i % palette.length]]));
+    history = []; dirty = false; brush = null;
+    const fc = topojson.feature(D.topo, D.topo.objects.eds);
+    const proj = d3.geoTransverseMercator().rotate([8, 0]).fitWidth(W - 20, fc);
+    path = d3.geoPath(proj);
+    const [[, y0], [, y1]] = path.bounds(fc), H = Math.ceil(y1 - y0 + 20);
+    proj.translate([proj.translate()[0] + 10, proj.translate()[1] - y0 + 10]);
+    svg.attr("viewBox", `0 0 ${W} ${H}`);
+    zoom.extent([[0, 0], [W, H]]).translateExtent([[-W, -H], [2 * W, 2 * H]]);
+    svg.call(zoom.transform, d3.zoomIdentity);
+    gEd.selectAll("path").data(D.eds, g => g.properties.id).join("path").attr("class", "ed")
+      .attr("d", g => path(topojson.feature(D.topo, g)))
+      .on("click", (e, g) => paint(g.properties.id))
+      .on("mouseenter", (e, g) => tip(g)).on("mouseleave", () => tip(null));
+    gAnchor.selectAll("circle").data(Object.values(D.anchors).flatMap(a => a.points)).join("circle").attr("class", "anchor")
+      .attr("r", 2.5).attr("cx", p => proj([p.lon, p.lat])[0]).attr("cy", p => proj([p.lon, p.lat])[1]);
+    document.getElementById("notice").innerHTML = `<strong>${D.entry.county}:</strong> ${D.eds.length} electoral divisions, ${D.names.length} clubs. Dots show the places each club was first centred on.`;
+    render(); status("No changes yet.");
+  }
+
+  const A = () => D.areas.assignments;
+  function paint(id) {
+    const before = A()[id] || null;
+    const after = brush === before ? null : brush;
+    if (before === after) return;
+    history.push([id, before]);
+    if (after) A()[id] = after; else delete A()[id];
+    dirty = true; render(); status("Unsaved changes.");
+  }
+  document.getElementById("undo").onclick = () => {
+    const [id, before] = history.pop() || [];
+    if (!id) return;
+    if (before) A()[id] = before; else delete A()[id];
+    dirty = history.length > 0; render(); status(dirty ? "Unsaved changes." : "No unsaved changes.");
+  };
+  document.getElementById("clearBrush").onclick = () => { brush = null; render(); };
+
+  function render() {
+    const stats = ClubData.clubStats(D.eds, A());
+    gEd.selectAll("path").attr("fill", g => A()[g.properties.id] ? D.color[A()[g.properties.id]] : css("--ramp-lo"));
+    gEdge.selectAll("path").data([topojson.mesh(D.topo, D.topo.objects.eds, (a, b) => a === b || A()[a.properties.id] !== A()[b.properties.id])])
+      .join("path").attr("class", "club-edge").attr("d", path);
+    gBrush.selectAll("path").data(brush && stats[brush] ? [topojson.merge(D.topo, stats[brush].eds)] : []).join("path").attr("class", "brush").attr("d", path);
+    const k = d3.zoomTransform(svg.node()).k;
+    gLbl.selectAll("text").data(D.names.filter(n => stats[n]), n => n).join("text").attr("class", "lbl")
+      .attr("font-size", 10 / k).style("stroke-width", 3 / k + "px")
+      .attr("x", n => path.centroid(topojson.merge(D.topo, stats[n].eds))[0])
+      .attr("y", n => path.centroid(topojson.merge(D.topo, stats[n].eds))[1]).text(n => n);
+    const sexWord = D.sex === "f" ? "females" : "males";
+    document.getElementById("clubs").innerHTML = D.names.map(n => {
+      const s = stats[n], p = D.players[n][D.last], info = D.anchors[n] || {};
+      const flagged = !s || (info.confidence && info.confidence !== "high");
+      return `<button data-name="${n}" aria-pressed="${n === brush}" title="${(info.note || "").replace(/"/g, "&quot;")}">
+        <i style="background:${D.color[n]}"></i><span class="${flagged ? "flag" : ""}">${n}</span>
+        <span class="num">${s ? s.eds.length : "–"}</span><span class="num">${s ? s[D.sex].toLocaleString("en-IE") : "–"}</span>
+        <span class="num">${s ? Math.round(p / s[D.sex] * 1000) : "–"}</span></button>`;
+    }).join("");
+    document.getElementById("brushLabel").textContent = brush ? `Painting with: ${brush}` : "Painting with: no club (clicks clear divisions)";
+    document.getElementById("save").disabled = !dirty;
+    document.getElementById("undo").disabled = !history.length;
+    D.stats = stats; D.sexWord = sexWord;
+  }
+  document.getElementById("clubs").addEventListener("click", e => {
+    const b = e.target.closest("button[data-name]"); if (!b) return;
+    brush = b.dataset.name; render();
+  });
+
+  function tip(g) {
+    const el = document.getElementById("tip");
+    if (!g) { el.textContent = brush ? `Click a division to give it to ${brush}.` : "Pick a club on the right, then click divisions."; return; }
+    const club = A()[g.properties.id];
+    el.innerHTML = `<strong>${g.properties.name}</strong>: ${g.properties.f.toLocaleString("en-IE")} females, ${g.properties.m.toLocaleString("en-IE")} males. ${club ? `Currently <strong>${club}</strong>.` : "No club."}`;
+  }
+  function status(t, ok) { const s = document.getElementById("status"); s.textContent = t; s.className = "status" + (ok ? " ok" : ""); }
+
+  document.getElementById("save").onclick = async () => {
+    const file = `${D.entry.county.toLowerCase()}_areas.json`;
+    const body = JSON.stringify({ ...D.areas, method: "nearest club place, then edited by hand", edited: new Date().toISOString().slice(0, 10) }, null, 1);
+    try {
+      const r = await fetch(`data/clubs/${file}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body });
+      if (!r.ok) throw new Error(r.status);
+      dirty = false; history = []; render(); status(`Saved to data/clubs/${file}.`, true);
+    } catch {
+      const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(new Blob([body], { type: "application/json" })), download: file });
+      a.click(); status(`This server can't save, so ${file} was downloaded. Put it in data/clubs/.`);
+    }
+  };
+  window.addEventListener("beforeunload", e => { if (dirty) e.preventDefault(); });
+  sel.addEventListener("change", () => load(+sel.value));
+  await load(0);
+})();
+</script>
+</html>
